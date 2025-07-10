@@ -1,0 +1,40 @@
+🔹 Objective:
+To automate the creation of AR payments in NetSuite for non-card transactions by extracting customer and invoice information from bank statement comments.
+
+🔧 Solution Summary:
+I developed a SQL Server–driven workflow that processes transaction data from BankStatements_Master for Egencia subsidiaries. The core logic performs fuzzy matching on transaction comments to identify potential customers and matches them to invoices using custom string patterns.
+
+The final output is a clean, enriched dataset containing CustomerExternalID and invoice reference, loaded into the staging table PaymentCreationMaster for payment creation in NetSuite.
+
+🧩 Key Steps Involved:
+Daily Data Load:
+Load all Egencia bank transactions into a temp table from BankStatements_Master.
+
+Fuzzy Customer Identification:
+Use fuzzy matching logic on the transaction comments to suggest up to 2 possible CustomerExternalIDs per transaction, with a confidence score. Each subsidiary is handled separately for more accurate matches.
+
+Merge and Enrich Data:
+All fuzzy-matched data is merged into BankMaster_Test_Temp_fuzzy with the CustomerDK column populated.
+
+Manual Overrides:
+Apply rule-based manual logic to override some customer matches and set their confidence to 1 to ensure priority.
+
+
+
+
+
+| Table Name                       | Role                                           |
+| -------------------------------- | ---------------------------------------------- |
+| `BankStatements_Master`          | Source bank transaction data                   |
+| `BankMaster_Test_Temp_fuzzy`     | Intermediate table with customer match logic   |
+| `SubsidiaryInvoiceMappingLookup` | Maps invoice reference from comments           |
+| `NPNonCardARStg`                 | Intermediate staging table for invoice linking |
+| `PaymentCreationMaster`          | Final table for NetSuite payment creation      |
+
+
+Invoice Extraction from Comments:
+Extract invoice references from comments using predefined prefixes (subsidiary-specific). Use lookup tables to map these invoices back to customer records.
+
+Load to Final Staging Table:
+All validated transactions are inserted into [dbo].[PaymentCreationMaster] for NetSuite integration.
+
